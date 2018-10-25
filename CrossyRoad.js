@@ -14,7 +14,7 @@ var count = 0;
 var grass = "images/grass.jpg";
 var road = "images/road.jpg";
 var water = "images/water.jpg";
-var x = 0;
+var j = 0;
 var y = 0;
 
 function Up(object)
@@ -83,7 +83,7 @@ function Right(object)
 
 function carAnimation(object)
 {
-    duration = Math.floor(Math.random() * (5 - 2 + 1)) + 2;
+    duration = Math.floor(Math.random() * (5 - 1 + 1)) + 1;
     animator = new KF.KeyFrameAnimator;
     var xpos = object.position.x;
     var ypos = object.position.y;
@@ -91,7 +91,7 @@ function carAnimation(object)
     animator.init({ 
         interps: [
             {
-                keys: [0, 0.3, 0.6, 0.9, 1],
+                keys: [0, 0.7, 0.8, 0.9, 1],
                 values: [
                     {x: xpos, y: ypos, z: zpos},
                     {x: xpos + 30, y: ypos, z: zpos},
@@ -103,7 +103,34 @@ function carAnimation(object)
             }
             ],
         loop: true,
-        duration: duration * 2000,
+        duration: duration * 2200,
+    });
+    animator.start();
+}
+
+function logAnimation(object)
+{
+    duration = Math.floor(Math.random() * (5 - 1 + 1)) + 1;
+    animator = new KF.KeyFrameAnimator;
+    var xpos = object.position.x;
+    var ypos = object.position.y;
+    var zpos = object.position.z;
+    animator.init({ 
+        interps: [
+            {
+                keys: [0, 0.7, 0.8, 0.9, 1],
+                values: [
+                    {x: xpos, y: ypos, z: zpos},
+                    {x: xpos + 42, y: ypos, z: zpos},
+                    {x: xpos + 42, y: ypos, z: zpos - 3},
+                    {x: xpos, y: ypos, z: zpos - 3},
+                    {x: xpos, y: ypos, z: zpos},
+                ],
+                target: object.position
+            }
+            ],
+        loop: true,
+        duration: duration * 5200,
     });
     animator.start();
 }
@@ -128,6 +155,8 @@ function createLand(y)
     mesh.castShadow = false;
     mesh.receiveShadow = true;
 
+    tree = new THREE.Object3D;
+
     var trunk = new THREE.CylinderGeometry( 8, 5, 30, 32 );
     var material_t = new THREE.MeshBasicMaterial( {color: 0x683000} );
     var trunk_tree = new THREE.Mesh( trunk, material_t );
@@ -142,22 +171,25 @@ function createLand(y)
     THREE.Math.degToRad(0));
 
     foliage_tree.scale.set(0.1, 0.1, 0.1);
-    
+    foliage_tree.position.set(0, 0, 1);
+
+    tree.add(trunk_tree);
+    tree.add(foliage_tree);
+
     for (let i = 0; i < 7; i++)
     {
-        clone_trunk = trunk_tree.clone();
-        clone_foliage = foliage_tree.clone();
+        tree_clone = tree.clone();
 
         posx = Math.floor(Math.random() * 12) + 1;
         posx *= Math.floor(Math.random()*2) == 1 ? 1 : -1;
         posy = Math.floor(Math.random() * 4) + 1;
         posy *= Math.floor(Math.random()*2) == 1 ? 1 : -1;
+  
+        tree_clone.position.set(posx, posy + y, 1.5);
+        treeBox = new THREE.Box3().setFromObject(tree_clone);
+        tree_clone.tag = "tree";
     
-        clone_trunk.position.set(posx, posy, 1.5);   
-        clone_foliage.position.set(posx, posy, 3);
-    
-        scene.add( clone_trunk );
-        scene.add( clone_foliage );
+        scene.add( tree_clone );
     }
 }
 
@@ -236,6 +268,58 @@ function createRoad(y)
 function createRiver(y)
 {
     console.log("creating river");
+
+     // Create a texture map
+     var map = new THREE.TextureLoader().load(water);
+     map.wrapS = map.wrapT = THREE.RepeatWrapping;
+     map.repeat.set(8, 8);
+ 
+     // Put in a ground plane to show off the lighting
+     geometry = new THREE.PlaneGeometry(25, 10, 50, 50);
+     var mesh = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({color:0xffffff, map:map, side:THREE.DoubleSide}));
+ 
+     mesh.position.set(0, y, 0);
+     
+     // Add the mesh to our group
+     scene.add( mesh );
+     mesh.castShadow = false;
+     mesh.receiveShadow = true;
+
+    first = new THREE.Object3D;
+    second = new THREE.Object3D;
+    third = new THREE.Object3D;
+
+    var tronco = new THREE.BoxGeometry( 2, 2, 0.25 );
+    var material_t = new THREE.MeshBasicMaterial( {color: 0x683000} );
+    var log = new THREE.Mesh( tronco, material_t );
+    log.rotation.set(THREE.Math.degToRad(0),
+    THREE.Math.degToRad(0),
+    THREE.Math.degToRad(90));
+    log.scale.set(1.5, 1.5, 1.5);
+    log.position.set(-14, y - 3.51, 0);
+    first.add(log);
+    log2 = log.clone();
+    log2.position.set(-21, y - 3.51, 0);
+    first.add(log2);
+    log3 = log.clone();
+    log3.position.set(-28, y - 3.51, 0);
+    first.add(log3);
+
+    log4 = log.clone();
+    log4.position.set(-21, y , 0);
+    log4.scale.set(2, 5, 1.5);
+    second.add(log4);
+
+    third = first.clone();
+    third.position.set(0, 7, 0);
+
+    scene.add(first);
+    scene.add(second);
+    scene.add(third);
+
+    logAnimation(first);
+    logAnimation(second);
+    logAnimation(third);
 }
 
 function createScene(canvas) 
@@ -247,16 +331,11 @@ function createScene(canvas)
     scene = new THREE.Scene();
     scene.background = new THREE.Color( 0xf0f0f0 );
     
-    // Create a group to hold the objects
-    group = new THREE.Object3D;
-    group.position.set(0,0,0);
-    scene.add(group);
-
     // Camera setup
     camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 4000 );
-    camera.position.set(0, 0, 15);
+    camera.position.set(0, 0, 16);
     camera.rotation.set(0,0,0)
-    group.add(camera);
+    scene.add(camera);
 
     var loader = new THREE.FBXLoader();
     loader.load( 'Robot/robot_idle.fbx', function ( object ) 
@@ -275,7 +354,9 @@ function createScene(canvas)
         } );
 
         robot = object;
-        group.add( robot );
+        robot.box = new THREE.Box3().setFromObject(robot);
+        robot.tag = "robot";
+        scene.add( robot );
               
         robot_mixer["idle"].clipAction( object.animations[ 0 ], robot ).play();
 
@@ -293,7 +374,9 @@ function createScene(canvas)
 
     createLand(0);
     createRoad(10);
-    createRiver();
+    createLand(20);
+    createRiver(30);
+    createLand(40);
 
     score_l = $("#score");
     reset = $("#reset");
@@ -307,8 +390,7 @@ function createScene(canvas)
     
     window.addEventListener( 'resize', onWindowResize);
 
-    orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
-
+    console.log(scene.children);
 }
 
 function onWindowResize() 
@@ -334,6 +416,26 @@ function onDocumentKeyDown(event)
         Right(robot);
 }
 
+function collisionDetector()
+{
+    robot.box = new THREE.Box3().setFromObject(robot);
+    if(robot.box.intersect(treeBox))
+    {
+        console.log("collision");
+        Up(robot);
+    }
+        
+    /*for ( var j = 0; j < scene.children.length; j++)
+    {
+        if(scene.children[j].tag == "tree" )
+           if(robot.box.intersect(scene.children[j].box))
+           {
+               console.log("collision");
+                Up(robot);
+           }
+    }*/
+}
+
 function run() 
 {
     requestAnimationFrame(function() { run(); });
@@ -346,13 +448,13 @@ function run()
     if(robot && robot_mixer[animation])
     {
         robot_mixer[animation].update(deltat*0.001);
+        camera.position.y = robot.position.y;
+        //collisionDetector();
         KF.update();
     }  
 
-    //camera.position.y = robot.position.y;
-    //console.log(camera.position)
-
-    orbitControls.update();
+    
+    //console.log(scene.children[i].position)
 
     /*if (count > 200 && rand != last)
     {
@@ -367,4 +469,5 @@ function run()
     {
         reset.removeClass("hidden");
     }*/
+    //
 }
