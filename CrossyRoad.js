@@ -449,7 +449,7 @@ function run()
     {
         robot_mixer[animation].update(deltat*0.001);
         camera.position.y = robot.position.y;
-        //collisionDetector();
+        collisionDetector();
         KF.update();
     }  
 
