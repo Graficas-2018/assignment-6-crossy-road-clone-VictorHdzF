@@ -3,6 +3,12 @@ var camera, scene, raycaster, renderer;
 var mouse = new THREE.Vector2(), INTERSECTED, CLICKED;
 var radius = 100, theta = 0;
 var robot;
+var cube;
+var car1, car2;
+var logs = [];
+var treeboxes = [];
+var riverBox;
+var riverBoxS;
 var robot_mixer = {};
 var currentTime = Date.now();
 var animation = "run";
@@ -14,6 +20,8 @@ var count = 0;
 var grass = "images/grass.jpg";
 var road = "images/road.jpg";
 var water = "images/water.jpg";
+var fall = null;
+var i = 0;
 var j = 0;
 var y = 0;
 
@@ -110,7 +118,7 @@ function carAnimation(object)
 
 function logAnimation(object)
 {
-    duration = Math.floor(Math.random() * (5 - 1 + 1)) + 1;
+    duration = Math.floor(Math.random() * (3 - 1 + 1)) + 1;
     animator = new KF.KeyFrameAnimator;
     var xpos = object.position.x;
     var ypos = object.position.y;
@@ -130,12 +138,12 @@ function logAnimation(object)
             }
             ],
         loop: true,
-        duration: duration * 5200,
+        duration: duration * 12000,
     });
     animator.start();
 }
 
-function createLand(y)
+async function createLand(y)
 {
     console.log("creating land");
 
@@ -176,7 +184,7 @@ function createLand(y)
     tree.add(trunk_tree);
     tree.add(foliage_tree);
 
-    for (let i = 0; i < 7; i++)
+    for ( i = 0; i < 7; i++)
     {
         tree_clone = tree.clone();
 
@@ -189,11 +197,12 @@ function createLand(y)
         treeBox = new THREE.Box3().setFromObject(tree_clone);
         tree_clone.tag = "tree";
     
+        treeboxes.push(treeBox);
         scene.add( tree_clone );
     }
 }
 
-function createRoad(y)
+async function createRoad(y)
 {
     console.log("creating road");
 
@@ -218,7 +227,7 @@ function createRoad(y)
 
     var chasis = new THREE.BoxGeometry( 1, 2, 1 );
     var material_c = new THREE.MeshBasicMaterial( {color: 0xbf0d0d} );
-    var car1 = new THREE.Mesh( chasis, material_c );
+    car1 = new THREE.Mesh( chasis, material_c );
     car1.rotation.set(THREE.Math.degToRad(0),
     THREE.Math.degToRad(0),
     THREE.Math.degToRad(90));
@@ -239,7 +248,7 @@ function createRoad(y)
     
     var chasis = new THREE.BoxGeometry( 2, 3, 1 );
     var material_c = new THREE.MeshBasicMaterial( {color: 0xffdd00} );
-    var car2 = new THREE.Mesh( chasis, material_c );
+    car2 = new THREE.Mesh( chasis, material_c );
     car2.rotation.set(THREE.Math.degToRad(0),
     THREE.Math.degToRad(0),
     THREE.Math.degToRad(90));
@@ -265,7 +274,7 @@ function createRoad(y)
     carAnimation(bus);
 }
 
-function createRiver(y)
+async function createRiver(y)
 {
     console.log("creating river");
 
@@ -279,6 +288,10 @@ function createRiver(y)
      var mesh = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({color:0xffffff, map:map, side:THREE.DoubleSide}));
  
      mesh.position.set(0, y, 0);
+     riverBox = new THREE.Box3().setFromObject(mesh);
+     //riverBox.max.z = riverBox.max.z + 0.5;
+     riverBoxS = new THREE.Box3().setFromObject(mesh);
+     riverBoxS.max.z = riverBox.max.z + 5;
      
      // Add the mesh to our group
      scene.add( mesh );
@@ -289,29 +302,44 @@ function createRiver(y)
     second = new THREE.Object3D;
     third = new THREE.Object3D;
 
-    var tronco = new THREE.BoxGeometry( 2, 2, 0.25 );
-    var material_t = new THREE.MeshBasicMaterial( {color: 0x683000} );
-    var log = new THREE.Mesh( tronco, material_t );
+    var tronco = new THREE.BoxGeometry( 2.1, 2.1, 0.25 );
+    var material_log = new THREE.MeshBasicMaterial( {color: 0x683000} );
+    log = new THREE.Mesh( tronco, material_log );
     log.rotation.set(THREE.Math.degToRad(0),
     THREE.Math.degToRad(0),
     THREE.Math.degToRad(90));
-    log.scale.set(1.5, 1.5, 1.5);
-    log.position.set(-14, y - 3.51, 0);
+    log.scale.set(1.5, 1.8, 1.5);
+    log.position.set(-14, y - 3.51, 0.5);
     first.add(log);
     log2 = log.clone();
-    log2.position.set(-21, y - 3.51, 0);
+    log2.position.set(-21, y - 3.51, 0.5);
     first.add(log2);
     log3 = log.clone();
-    log3.position.set(-28, y - 3.51, 0);
+    log3.position.set(-28, y - 3.51, 0.5);
     first.add(log3);
 
     log4 = log.clone();
-    log4.position.set(-21, y , 0);
-    log4.scale.set(2, 5, 1.5);
+    log4.position.set(-21, y , 0.5);
+    log4.scale.set(2, 5.5, 1.5);
     second.add(log4);
 
-    third = first.clone();
-    third.position.set(0, 7, 0);
+    log5 = log.clone();
+    log5.position.set(-14, y + 3.51 , 0.5);
+    third.add(log5);
+    log6 = log.clone();
+    log6.position.set(-21, y + 3.51 , 0.5);
+    third.add(log6);
+    log7 = log.clone();
+    log7.position.set(-28, y + 3.51 , 0.5);
+    third.add(log7);
+
+    logs.push(log);
+    logs.push(log2);
+    logs.push(log3);
+    logs.push(log4);
+    logs.push(log5);
+    logs.push(log6);
+    logs.push(log7);
 
     scene.add(first);
     scene.add(second);
@@ -322,21 +350,18 @@ function createRiver(y)
     logAnimation(third);
 }
 
-function createScene(canvas) 
+async function createCube()
 {
-    renderer = new THREE.WebGLRenderer( { canvas: canvas, antialias: true } );
-    // Set the viewport size
-    renderer.setSize(window.innerWidth, window.innerHeight);
-        
-    scene = new THREE.Scene();
-    scene.background = new THREE.Color( 0xf0f0f0 );
-    
-    // Camera setup
-    camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 4000 );
-    camera.position.set(0, 0, 16);
-    camera.rotation.set(0,0,0)
-    scene.add(camera);
+    var c = new THREE.BoxGeometry( 2, 2, 1 );
+    var material_cube = new THREE.MeshBasicMaterial( {color: 0xb2006a} );
+    cube = new THREE.Mesh( c, material_cube );
+    cube.position.set(0, 0, 1.1);
+    cube.tag = "cube";
+    scene.add(cube);  
+}
 
+async function createRobot()
+{
     var loader = new THREE.FBXLoader();
     loader.load( 'Robot/robot_idle.fbx', function ( object ) 
     {
@@ -366,31 +391,50 @@ function createScene(canvas)
             robot_mixer["run"].clipAction( object.animations[ 0 ], robot ).play();
         });
     });
+}
 
+async function createScene(canvas) 
+{
+    renderer = new THREE.WebGLRenderer( { canvas: canvas, antialias: true } );
+    // Set the viewport size
+    renderer.setSize(window.innerWidth, window.innerHeight);
+        
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color( 0xf0f0f0 );
     
+    // Camera setup
+    camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 4000 );
+    camera.position.set(0, 0, 16);
+    camera.rotation.set(0,0,0)
+    scene.add(camera);
+
     var light = new THREE.DirectionalLight( 0xffffff, 1 );
     light.position.set( 1, 1, 100 );
     scene.add( light );
 
-    createLand(0);
-    createRoad(10);
-    createLand(20);
-    createRiver(30);
-    createLand(40);
+    await createCube();
 
+    await createLand(0);
+    await createRoad(10);
+    await createLand(20);
+    await createRiver(30);
+    await createLand(40);
+
+    result = $("#result");
     score_l = $("#score");
     reset = $("#reset");
     $("#reset").click(() =>{
         score = 0;
         reset.addClass("hidden");
         score_l.text("Score:0");
+        scene.add(cube);
+        cube.position.set(0, 0, 1.1);
+        result.text("");
     });
         
     document.addEventListener('keydown', onDocumentKeyDown);
     
     window.addEventListener( 'resize', onWindowResize);
-
-    console.log(scene.children);
 }
 
 function onWindowResize() 
@@ -406,34 +450,57 @@ function onDocumentKeyDown(event)
 
     if (keyCode == 38)
     {
-        Up(robot);
+        Up(cube);
         score += 1;
         score_l.text("Score:" + score);
     }
     else if (keyCode == 37)
-        Left(robot);
+        Left(cube);
     else if (keyCode == 39)
-        Right(robot);
+        Right(cube);
 }
 
 function collisionDetector()
 {
-    robot.box = new THREE.Box3().setFromObject(robot);
-    if(robot.box.intersect(treeBox))
+    cube.box = new THREE.Box3().setFromObject(cube);
+    car1.box = new THREE.Box3().setFromObject(car1);
+    car2.box = new THREE.Box3().setFromObject(car2);
+
+    for( let box of treeboxes )
     {
-        console.log("collision");
-        Up(robot);
+        if(cube.box.intersectsBox(box))
+        {
+            console.log("collision with tree");
+            Up(cube);
+        }
     }
-        
-    /*for ( var j = 0; j < scene.children.length; j++)
+
+    for ( i = 0; i < logs.length; i++)
     {
-        if(scene.children[j].tag == "tree" )
-           if(robot.box.intersect(scene.children[j].box))
-           {
-               console.log("collision");
-                Up(robot);
-           }
-    }*/
+        logs[i].box = new THREE.Box3().setFromObject(logs[i]);
+    }
+
+    for ( j = 0; j < logs.length; j++)
+    {
+        if (cube.box.intersectsBox(logs[j].box))
+        {
+            console.log("collision with log");
+            //cube.position.x = logs[j].position.x;
+            cube.position.x += 0.045;
+            cube.position.z += 0.045;
+        }
+    }
+
+    if (cube.box.intersectsBox(riverBoxS))
+        cube.position.z -= 0.045;
+
+    if(cube.box.intersectsBox(car1.box) || cube.box.intersectsBox(car2.box) || cube.box.intersectsBox(riverBox) )
+    {
+        reset.removeClass("hidden");
+        scene.remove(cube);
+        console.log("lethal collision");
+        result.text(" YOU LOST !")
+    }
 }
 
 function run() 
@@ -445,29 +512,17 @@ function run()
     var deltat = now - currentTime;
     currentTime = now;
 
-    if(robot && robot_mixer[animation])
+    if(cube)
     {
-        robot_mixer[animation].update(deltat*0.001);
-        camera.position.y = robot.position.y;
+        camera.position.y = cube.position.y;
         collisionDetector();
         KF.update();
-    }  
-
+    }
     
-    //console.log(scene.children[i].position)
-
-    /*if (count > 200 && rand != last)
+    if (score >= 55)
     {
-        console.log("Robot moving: " + rand);
-        UpAnimation(robots[rand]);
-        count = 0;
-        last = rand;
-    }*/
-    
-
-/*    if (Date.now() >= timer)
-    {
+        result.text(" YOU WIN !")
         reset.removeClass("hidden");
-    }*/
-    //
+        scene.remove(cube);   
+    }
 }
